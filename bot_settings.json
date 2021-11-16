@@ -1,0 +1,59 @@
+{
+    "bot_internals": {
+        "bound_channel": 646545940081016832
+    },
+    "bot_timekeeping": {
+        "intro": [
+            "wait",
+            "wait what",
+            "oh wait",
+            "wow",
+            "holy frog",
+            "wtfrog",
+            "oh wtfrog",
+            "wtbonk",
+            "oh wtbonk",
+            "o",
+            "oh",
+            "oh my",
+            "oh my goodness",
+            "hang on"
+        ],
+        "outro": [
+            "dang",
+            "whacko",
+            "crazy",
+            "what",
+            "that's wild",
+            "that's insane",
+            "that's crazy",
+            "bruh",
+            "wtfrog",
+            "gg",
+            "darn"
+        ],
+        "day_of_week_list": [
+            "monday",
+            "tuesday",
+            "wednesday",
+            "thursday",
+            "friday",
+            "saturday",
+            "sunday"
+        ],
+        "month_list": [
+            "january",
+            "february",
+            "march",
+            "april",
+            "may",
+            "june",
+            "july",
+            "august",
+            "september",
+            "october",
+            "november",
+            "december"
+        ]
+    }
+}
