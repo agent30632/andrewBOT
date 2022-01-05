@@ -131,3 +131,6 @@ dmypy.json
 # My stuff is down here
 authkey.json
 bot_settings_backup.json
+andrew_bot_startup.bat
+test_env.py
+startup.txt
