@@ -13,23 +13,18 @@ from discord.message import Message
 
 import typo_gen
 
+###################################################################################################
+# Bot variables
+
 bot = commands.Bot(command_prefix='$')
 
-# JSON parsing
-def json_write():
-    json_file_w = open('bot_settings.json', 'w', encoding='utf8')
-    json.dump({"bot_internals": bot_internals, 
-               "bot_timekeeping": bot_timekeeping}, 
-              json_file_w)
-    print("rewrote json")
-
+# json files
 settings_file = open('bot_settings.json', encoding='utf8')
 data = json.load(settings_file)
-
 authkey_file = open('authkey.json', encoding='utf8')
 authkey = json.load(authkey_file)
 
-# global variables
+# data vars
 bot_internals = data['bot_internals']
 bot_timekeeping = data['bot_timekeeping']
 
@@ -37,27 +32,22 @@ andrew_intro = bot_timekeeping['intro']
 andrew_outro = bot_timekeeping['outro']
 day_of_week_list = bot_timekeeping['day_of_week_list']
 
+# settings
 api_key = authkey['api_key']
-
 first_launch = True
 
-@bot.event
-async def on_ready():
-    print('logged in as {0.user}'.format(bot))
-    timekeeper.start()
-    # deez_nuts.start()
-    # random_message.start()
+###################################################################################################
+# Helper Functions
 
-@bot.command(name='echo')
-async def _echo(ctx, *args):
-    print('command: echo | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
-    await ctx.send('here\'s what you told me: {}'.format(' '.join(args)))
+def json_write():
+    '''Rewrites the bot's JSON properties (mainly the internals)
+    '''
+    json_file_w = open('bot_settings.json', 'w', encoding='utf8')
+    json.dump({"bot_internals": bot_internals, 
+               "bot_timekeeping": bot_timekeeping}, 
+              json_file_w)
+    print("rewrote json")
 
-@bot.command(name='ping')
-async def _ping(ctx):
-    print('command: ping | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
-    await ctx.send('pong')
-    
 def get_time_string() -> str:
     '''Gets a string that represents the current date and time (as written by Andrew Liang)
 
@@ -105,19 +95,41 @@ def get_last_word(message: Message) -> str:
     last_word = last_word[:last_letter_index + 1]
     return last_word
 
-# def can_respond(message: Message, max_delta=6.5):
-#     timestamp = message.created_at
-#     now = datetime.datetime.utcnow()
-#     delta = now - timestamp
-#     if delta < datetime.timedelta(seconds = max_delta):
-#         if not message.author.bot:
-#             return True
-#     return False
+def log(command: str, server="", channel="", newline=True):
+    time_str = datetime.datetime.now().strftime("%X")
+    
+    if server == "":
+        if channel == "":
+            if newline:
+                print(f"[{time_str}] task: {command}")
+            else:
+                print(f"[{time_str}] task: {command}", end="")
+    else:
+        if newline:
+            print(f"[{time_str}] task: {command} | location: \"{server}\" - \"{channel}\"")
+        else:
+            print(f"[{time_str}] task: {command} | location: \"{server}\" - \"{channel}\"", end="")
 
-@bot.command(name='whattime')
-async def _whattime(ctx):
-    current_time = datetime.datetime.now()
-    print('command: whattime | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name + " | time: " + current_time.strftime('%c'))
+###################################################################################################
+# Text commands
+
+@bot.command(name="echo")
+async def echo(ctx, *args):
+    log("echo", server=ctx.guild.name, channel=ctx.channel.name)
+    # print('command: echo | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
+    await ctx.send('here\'s what you told me: {}'.format(' '.join(args)))
+
+@bot.command(name="ping")
+async def ping(ctx):
+    log("ping", server=ctx.guild.name, channel=ctx.channel.name)
+    # print('command: ping | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
+    await ctx.send('pong')
+
+@bot.command(name="whattime")
+async def whattime(ctx):
+    log("whattime", server=ctx.guild.name, channel=ctx.channel.name)
+    # current_time = datetime.datetime.now()
+    # print('command: whattime | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name + " | time: " + current_time.strftime('%c'))
 
     # message strings
     intro = random.choice(bot_timekeeping['intro'])
@@ -144,9 +156,10 @@ async def _whattime(ctx):
     await ctx.send(outro)
 
 # binds the bot to a specific channel
-@bot.command(name='bind')
-async def _bind(ctx):
-    print('command: bind | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
+@bot.command(name="bind")
+async def bind(ctx):
+    log("bind", server=ctx.guild.name, channel=ctx.channel.name)
+    # print('command: bind | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
     
     print(bot_internals['bound_channel'])
     bot_internals['bound_channel'] = ctx.channel.id
@@ -158,12 +171,29 @@ async def _bind(ctx):
     else:
         await ctx.send('bound to channel' + ' ' + bound_channel.name)
     json_write()
-  
+    
+###################################################################################################
+# Voice commands
+
+@bot.command(name="join")
+async def join(ctx):
+    log("join", server=ctx.guild.name, channel=ctx.channel.name)
+    # print('command: join | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
+    if ctx.author.voice is not None:
+        await ctx.send("feature not implemented")
+    else:
+        await ctx.send("please join a channel")
+
+###################################################################################################
+# Looping/concurrent tasks
+
 @tasks.loop(hours=3.0)
 async def timekeeper():
     current_time = datetime.datetime.now()
-    print('task: timekeeper | time: ' + current_time.strftime('%c'))
+    # print('task: timekeeper | time: ' + current_time.strftime('%c'))
     bound_channel = bot.get_channel(bot_internals["bound_channel"])
+    if bound_channel is not None:
+        log("timekeeper", server=bound_channel.guild.name, channel=bound_channel.name)
 
     if bound_channel is None:
         print("you better start binding")
@@ -201,9 +231,11 @@ async def timekeeper():
 
 @bot.listen("on_message")
 async def random_response(message: Message):
-    print("task: random response", end="")
+    # print("task: random response", end="")
     
     msg_channel = message.channel
+    
+    log("random response", server=message.guild.name, channel=message.channel.name, newline=False)
     
     # random chance to respond
     resp_rand = random.randint(1, 50)
@@ -245,5 +277,12 @@ async def random_response(message: Message):
         await msg_channel.send("poggers")
     
     print()
+
+###################################################################################################
+# bot startup
+@bot.event
+async def on_ready():
+    print('logged in as {0.user}'.format(bot))
+    timekeeper.start()
 
 bot.run(api_key)
