@@ -1,8 +1,9 @@
 {
     "bot_internals": {
-        "bound_channel": 646545940081016832
+        "bound_channel": 646545940081016832,
+        "ffmpeg_path": "C:/FFmpeg/bin/ffmpeg.exe"
     },
-    "bot_timekeeping": {
+    "bot_data": {
         "intro": [
             "wait",
             "wait what",
@@ -47,6 +48,7 @@
             "huh?????????",
             "??????????????",
             "what the fuck happened",
+            "what the frog happened",
             "when did that happen",
             "we are not bing chilling"
         ],
@@ -72,6 +74,45 @@
             "october",
             "november",
             "december"
-        ]
+        ],
+        "voice_lines": {
+            "chilling": [
+                "bing chilling",
+                "chilling"
+            ],
+            "roasted": [
+                "roasted",
+                "boom roasted"
+            ],
+            "huh": [
+                "huh",
+                "huh?"
+            ],
+            "no_kya": [
+                "no kyap",
+                "no kya",
+                "no kyaa",
+                "nocap",
+                "no cap"
+            ],
+            "not_pog": [
+                "unpog",
+                "unpoggers",
+                "not pog",
+                "not poggers"
+            ],
+            "oouumm": [
+                "oouumm",
+                "oum",
+                "o",
+                "oo",
+                "ooo"
+            ],
+            "pog": [
+                "pog",
+                "poggers",
+                "poggo"
+            ]
+        }
     }
 }
