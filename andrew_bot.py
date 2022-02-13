@@ -36,6 +36,8 @@ andrew_intro = bot_data["intro"]
 andrew_outro = bot_data["outro"]
 day_of_week_list = bot_data["day_of_week_list"]
 
+mention_resposes = bot_data["mention_responses"]
+
 voice_lines = bot_data["voice_lines"]
 # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
 voice_clips = [f for f in os.listdir("audio") if os.path.isfile(os.path.join("audio", f))]
@@ -96,18 +98,26 @@ def get_last_word(message: Message) -> str:
     Returns:
         str: the last word in the Message
     '''
-    
+
     message_content = message.content.strip()
     last_word = message_content.split(" ")[-1]
     last_letter_index = len(last_word)
-    for i in range(len(last_word)):
-        if last_word[i] != "." and last_word[i] != "?" and last_word[i] != "!" and last_word[i] != "\"":
+    for i, char in enumerate(last_word):
+        if char != "." and char != "?" and char != "!" and char != "\"":
             last_letter_index = i
 
     last_word = last_word[:last_letter_index + 1]
     return last_word
 
 def log(command: str, server="", channel="", newline=True):
+    '''Logs commands to the terminal.
+
+    Args:
+        command (str): name of the command that was run
+        server (str, optional): what server the command was run from. Defaults to "".
+        channel (str, optional): the channel the command was run from. Defaults to "".
+        newline (bool, optional): whether to add a new line at the end. Defaults to True.
+    '''
     time_str = datetime.datetime.now().strftime("%X")
     
     if server == "":
@@ -127,18 +137,33 @@ def log(command: str, server="", channel="", newline=True):
 
 @bot.command(name="echo", description="echoes your message (whatever comes after the command)")
 async def echo(ctx, *args):
+    '''echoes whatever you type after the command
+
+    Args:
+        ctx ([type]): [description]
+    '''
     log("echo", server=ctx.guild.name, channel=ctx.channel.name)
     # print('command: echo | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
     await ctx.send('here\'s what you told me: {}'.format(' '.join(args)))
 
 @bot.command(name="ping", description="pong")
 async def ping(ctx):
+    '''pong
+
+    Args:
+        ctx ([type]): [description]
+    '''
     log("ping", server=ctx.guild.name, channel=ctx.channel.name)
     # print('command: ping | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
     await ctx.send('pong')
 
 @bot.command(name="whattime", description="tells you the time (very vaguely)")
 async def whattime(ctx):
+    '''Tells you the time (very vaguely)
+
+    Args:
+        ctx ([type]): [description]
+    '''
     log("whattime", server=ctx.guild.name, channel=ctx.channel.name)
     # current_time = datetime.datetime.now()
     # print('command: whattime | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name + " | time: " + current_time.strftime('%c'))
@@ -170,6 +195,11 @@ async def whattime(ctx):
 # binds the bot to a specific channel
 @bot.command(name="bind", description="binds the automated timekeeping feature to the current channel")
 async def bind(ctx):
+    '''Binds the timekeeping feature to a certain channel
+
+    Args:
+        ctx ([type]): [description]
+    '''
     log("bind", server=ctx.guild.name, channel=ctx.channel.name)
     # print('command: bind | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
     
@@ -189,6 +219,11 @@ async def bind(ctx):
 
 @bot.command(name="join", description="joins whatever voice call you're in")
 async def join(ctx):
+    '''Join a specific voice server
+
+    Args:
+        ctx ([type]): [description]
+    '''
     log("join", server=ctx.guild.name, channel=ctx.channel.name, newline=False)
     # print('command: join | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
     if ctx.author.voice is not None:        
@@ -216,41 +251,72 @@ async def join(ctx):
     
     print()
         
-@bot.command(name="speak", description="says a random Andrew voice clip")
-async def speak(ctx):
-    log("speak", server=ctx.guild.name, channel=ctx.channel.name, newline=False)
+# @bot.command(name="speak", description="says a random Andrew voice clip")
+# async def speak(ctx):
+#     '''Say a random voice clip
+
+#     Args:
+#         ctx ([type]): [description]
+#     '''
+#     log("speak", server=ctx.guild.name, channel=ctx.channel.name, newline=False)
     
-    vc_client_list = bot.voice_clients
+#     vc_client_list = bot.voice_clients
     
-    # getting the voice client that matches the context
-    ctx_client = None
-    for client in vc_client_list:
-        if client.guild == ctx.guild:
-            ctx_client = client
+#     # getting the voice client that matches the context
+#     ctx_client = None
+#     for client in vc_client_list:
+#         if client.guild == ctx.guild:
+#             ctx_client = client
     
-    # if the bot is not in a vc
-    if ctx_client is None:
-        await ctx.send("bot is not in a call!")
-        print()
-    else:
-        # pick a certain line
-        random_line = random.choice(list(voice_lines.keys()))
-        matching_clips = [file for file in voice_clips if file[:file.rfind("_")] == random_line]
-        andrew_voice_clip = random.choice(matching_clips)
-        clip_path = os.path.join(os.getcwd(), "audio", andrew_voice_clip)
-        print(" | line: " + random_line + " | clip: " + andrew_voice_clip)
+#     # if the bot is not in a vc
+#     if ctx_client is None:
+#         await ctx.send("bot is not in a call!")
+#         print()
+#     else:
+#         # pick a certain line
+#         random_line = random.choice(list(voice_lines.keys()))
+#         matching_clips = [file for file in voice_clips if file[:file.rfind("_")] == random_line]
+#         andrew_voice_clip = random.choice(matching_clips)
+#         clip_path = os.path.join(os.getcwd(), "audio", andrew_voice_clip)
+#         print(" | line: " + random_line + " | clip: " + andrew_voice_clip)
         
-        # play the clip
-        ctx_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=clip_path))
+#         # play the clip
+#         ctx_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=clip_path))
         
-@bot.command(name="say", description=f"says a specific Andrew voice line\nlist of all voice lines: {voice_lines}")
-async def say(ctx, *, line):
+@bot.command(name="say", description=f"list of all voice lines: {voice_lines}")
+async def say(ctx, *, line=None):
+    '''Says a voice line
+
+    Args:
+        ctx (_type_): Command context
+        line (_type_, optional): Says a specific voice line. Defaults to None.
+    '''
     log("say", server=ctx.guild.name, channel=ctx.channel.name, newline=False)
-    print(" | line: " + line, end="")
     
-    if line == "":
-        await ctx.send("please specify a voice line!")
-        print()
+    if line == "" or line is None:
+        # no args
+        vc_client_list = bot.voice_clients
+
+        # getting the voice client that matches the context
+        ctx_client = None
+        for client in vc_client_list:
+            if client.guild == ctx.guild:
+                ctx_client = client
+
+        # if the bot is not in a vc
+        if ctx_client is None:
+            await ctx.send("bot is not in a call!")
+            print()
+        else:
+            # pick a certain line
+            random_line = random.choice(list(voice_lines.keys()))
+            matching_clips = [file for file in voice_clips if file[:file.rfind("_")] == random_line]
+            andrew_voice_clip = random.choice(matching_clips)
+            clip_path = os.path.join(os.getcwd(), "audio", andrew_voice_clip)
+            print(" | line: " + random_line + " | clip: " + andrew_voice_clip)
+            
+            # play the clip
+            ctx_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=clip_path))
     else:
         match = None
         # matching to available voice lines
@@ -287,11 +353,22 @@ async def say(ctx, *, line):
 
 @say.error
 async def say_error(ctx, error):
+    '''Error handling for $say
+
+    Args:
+        ctx ([type]): [description]
+        error ([type]): [description]
+    '''
     if isinstance(error, commands.errors.MissingRequiredArgument):
         await ctx.send("please specify a voice line!")
 
 @bot.command(name="leave", description="leaves the current voice call")
 async def leave(ctx):
+    '''Leave the current voice channel
+
+    Args:
+        ctx ([type]): [description]
+    '''
     log("leave", server=ctx.guild.name, channel=ctx.channel.name)
     
     vc_client_list = bot.voice_clients
@@ -313,6 +390,8 @@ async def leave(ctx):
 
 @tasks.loop(hours=2.0)
 async def timekeeper():
+    '''Time keeping
+    '''
     # current_time = datetime.datetime.now()
     # print('task: timekeeper | time: ' + current_time.strftime('%c'))
     bound_channel = bot.get_channel(bot_internals["bound_channel"])
@@ -325,6 +404,7 @@ async def timekeeper():
     
     global first_launch
     if first_launch:
+        print()
         first_launch = False
         return
     
@@ -355,7 +435,16 @@ async def timekeeper():
 
 @bot.listen("on_message")
 async def random_response(message: Message):
+    '''Random response to a message
+
+    Args:
+        message (Message): the message to respond to
+    '''
     msg_channel = message.channel
+    
+    # ignore mentions
+    if bot.user.mentioned_in(message):
+        return
     
     # ignore bot messages
     if message.author.bot:
@@ -417,11 +506,40 @@ async def random_response(message: Message):
         await msg_channel.send("poggers")
     
     print()
+    
+@bot.listen("on_message")
+async def mention_response(message: Message):
+    '''Responds when mentioned
+
+    Args:
+        message (Message): [description]
+    '''
+    if bot.user.mentioned_in(message):
+        log("mention response", server=message.guild.name, channel=message.channel.name, newline=False)
+        
+        rand_resp = random.choice(mention_resposes)
+        print(f" | response: \"{rand_resp}\"")
+        
+        msg_channel = message.channel
+        await msg_channel.send(rand_resp)
+               
+@bot.event
+async def on_command_error(ctx, error):
+    '''CommandNotFound handler
+
+    Args:
+        ctx ([type]): [description]
+        error ([type]): [description]
+    '''
+    if isinstance(error, commands.CommandNotFound):
+        ctx.send("not a real command!")
 
 ###################################################################################################
 # bot startup
 @bot.event
 async def on_ready():
+    '''Runs when the bot is ready
+    '''
     print('logged in as {0.user}'.format(bot))
     timekeeper.start()
     
