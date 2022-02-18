@@ -214,6 +214,24 @@ async def bind(ctx):
         await ctx.send('bound to channel' + ' ' + bound_channel.name)
     json_write()
     
+@bot.command(name="nut")
+async def nut(ctx):
+    '''[blank] these nuts.
+
+    Args:
+        ctx (_type_): _description_
+    '''
+    try:
+        msg_list = await ctx.channel.history(limit=3).flatten()
+    except discord.Forbidden:
+        await ctx.send("forbidden: need history permissions!")
+        return
+    except discord.HTTPException as err:
+        await ctx.send(f"http error {err.status}")
+        return
+        
+    await ctx.send(get_last_word(msg_list[1]) + " these nuts.")
+    
 ###################################################################################################
 # Voice commands
 
@@ -383,7 +401,6 @@ async def leave(ctx):
             
     if not call_left:
         await ctx.send("not connected to a call!")
-        
 
 ###################################################################################################
 # Looping/concurrent tasks
@@ -432,6 +449,18 @@ async def timekeeper():
     # outro text
     time.sleep(1)
     await bound_channel.send(outro)
+
+@tasks.loop(minutes=30)
+async def idle_dc():
+    '''Disconnect when idle
+    '''
+    vc_client_list = bot.voice_clients
+    
+    for client in vc_client_list:
+        if len(client.channel.members) <= 1:
+            await client.disconnect()
+            log("voice idle dc", server=client.guild.name, channel=client.channel.name)
+            
 
 @bot.listen("on_message")
 async def random_response(message: Message):
