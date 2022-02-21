@@ -1,3 +1,6 @@
+'''A python module for basic typo generation
+'''
+
 import random
 
 def make_typo(string: str, min_typos = 2) -> str:
@@ -20,11 +23,12 @@ def make_typo(string: str, min_typos = 2) -> str:
     i = 0
     string_list = list(string)
     
+    # loops left-aligned
     while i < target_typos // 2:
         index = random.randint(0, len(string_list) - 2)
         string_list[index], string_list[index + 1] = string_list[index + 1], string_list[index]
         i += 1
-    
+    # loops right-aligned
     while i < target_typos:
         index = random.randint(1, len(string) - 1)
         string_list[index], string_list[index - 1] = string_list[index - 1], string_list[index]

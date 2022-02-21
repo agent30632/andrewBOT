@@ -37,6 +37,7 @@ andrew_outro = bot_data["outro"]
 day_of_week_list = bot_data["day_of_week_list"]
 
 mention_resposes = bot_data["mention_responses"]
+extra_nut_messages = bot_data["extra_nut_messages"]
 
 voice_lines = bot_data["voice_lines"]
 # https://stackoverflow.com/questions/3207219/how-do-i-list-all-files-of-a-directory
@@ -108,6 +109,34 @@ def get_last_word(message: Message) -> str:
 
     last_word = last_word[:last_letter_index + 1]
     return last_word
+
+def these_nuts(last_word):
+    '''adds "these nuts" to the end of a message (in the context of the bot anyways)
+
+    Args:
+        last_word (string): last word of the message
+    '''
+    if last_word == "":
+        return
+    if len(last_word) >= 2:
+        if last_word[-2:] == "ma":
+            nutsified_message = last_word + " nuts."
+        else:
+            nutsified_message = last_word + " these nuts"
+    else:
+        nutsified_message = last_word + " these nuts"
+        
+    extra_nut_choice = random.randint(1, 5)
+    if extra_nut_choice == 1:
+        num_extra = random.randint(1, len(extra_nut_messages))
+        random_list = random.sample(extra_nut_messages, num_extra)
+        
+        for word in random_list:
+            nutsified_message += " " + word
+    else:
+        nutsified_message += "."
+        
+    return nutsified_message
 
 def log(command: str, server="", channel="", newline=True):
     '''Logs commands to the terminal.
@@ -214,23 +243,30 @@ async def bind(ctx):
         await ctx.send('bound to channel' + ' ' + bound_channel.name)
     json_write()
     
-@bot.command(name="nut")
+@bot.command(name="nut", aliases=["nuts"])
 async def nut(ctx):
     '''[blank] these nuts.
 
     Args:
         ctx (_type_): _description_
     '''
+    
+    log("nut", server=ctx.guild.name, channel=ctx.channel.name, newline=False)
+    
     try:
         msg_list = await ctx.channel.history(limit=3).flatten()
     except discord.Forbidden:
+        print(" | error: invalid perms")
         await ctx.send("forbidden: need history permissions!")
         return
     except discord.HTTPException as err:
+        print(f" | error: http error {err.status}")
         await ctx.send(f"http error {err.status}")
         return
-        
-    await ctx.send(get_last_word(msg_list[1]) + " these nuts.")
+    
+    nut_string = these_nuts(get_last_word(msg_list[1]))
+    await ctx.send(nut_string)
+    print()
     
 ###################################################################################################
 # Voice commands
@@ -268,38 +304,6 @@ async def join(ctx):
         await ctx.send("please join a channel")
     
     print()
-        
-# @bot.command(name="speak", description="says a random Andrew voice clip")
-# async def speak(ctx):
-#     '''Say a random voice clip
-
-#     Args:
-#         ctx ([type]): [description]
-#     '''
-#     log("speak", server=ctx.guild.name, channel=ctx.channel.name, newline=False)
-    
-#     vc_client_list = bot.voice_clients
-    
-#     # getting the voice client that matches the context
-#     ctx_client = None
-#     for client in vc_client_list:
-#         if client.guild == ctx.guild:
-#             ctx_client = client
-    
-#     # if the bot is not in a vc
-#     if ctx_client is None:
-#         await ctx.send("bot is not in a call!")
-#         print()
-#     else:
-#         # pick a certain line
-#         random_line = random.choice(list(voice_lines.keys()))
-#         matching_clips = [file for file in voice_clips if file[:file.rfind("_")] == random_line]
-#         andrew_voice_clip = random.choice(matching_clips)
-#         clip_path = os.path.join(os.getcwd(), "audio", andrew_voice_clip)
-#         print(" | line: " + random_line + " | clip: " + andrew_voice_clip)
-        
-#         # play the clip
-#         ctx_client.play(discord.FFmpegPCMAudio(executable=ffmpeg_path, source=clip_path))
         
 @bot.command(name="say", description=f"list of all voice lines: {voice_lines}")
 async def say(ctx, *, line=None):
@@ -503,28 +507,8 @@ async def random_response(message: Message):
         
         # nutsify
         last_word = get_last_word(message)
-        if last_word == "":
-            return
-        if len(last_word) >= 2:
-            if last_word[-2:] == "ma":
-                nutsified_message = last_word + " nuts."
-            else:
-                nutsified_message = last_word + " these nuts."
-        else:
-            nutsified_message = last_word + " these nuts."
-        await msg_channel.send(nutsified_message)
-
-        # boom roasted
-        roast_chance = random.randint(1, 10)
-        if roast_chance == 1:
-            time.sleep(0.5)
-            await msg_channel.send("boom roasted")
-        
-        # no kyap
-        kyap_chance = random.randint(1, 10)
-        if kyap_chance == 1:
-            time.sleep(0.5)
-            await msg_channel.send("no kyap")
+        nut_message = these_nuts(last_word)
+        await msg_channel.send(nut_message)
     elif resp_choice <= 75:
         print(" | choice: you're my (blank)", end="")
         last_word = get_last_word(message)

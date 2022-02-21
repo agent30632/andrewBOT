@@ -34,6 +34,8 @@
             "that's wild",
             "that's insane",
             "that's crazy",
+            "that's cringe",
+            "that's so cringe",
             "bruh",
             "wtfrog",
             "frog",
@@ -118,7 +120,15 @@
             "poggers",
             "not poggers",
             "no kyap",
-            "that's kyap"
+            "that's kyap",
+            "that's so cringe"
+        ],
+        "extra_nut_messages": [
+            "haha",
+            "bing chilling",
+            "no kyap",
+            "poggo",
+            "boom roasted"
         ]
     }
 }
