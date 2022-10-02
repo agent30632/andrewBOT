@@ -4,7 +4,7 @@
         "ffmpeg_path": "C:/FFmpeg/bin/ffmpeg.exe"
     },
     "bot_data": {
-        "intro": [
+        "dow_intro": [
             "wait",
             "wait what",
             "oh wait",
@@ -26,7 +26,7 @@
             "??????",
             "bing bong"
         ],
-        "outro": [
+        "dow_outro": [
             "dang",
             "whacko",
             "crazy",
@@ -46,15 +46,27 @@
             "huh?",
             "no kya",
             "no kyap",
+            "no cap",
+            "no kizzy",
             "day gone.",
             "huh?????????",
             "??????????????",
             "what the fuck happened",
             "what the frog happened",
             "when did that happen",
-            "we are not bing chilling"
+            "we are not bing chilling",
+            "nuggets",
+            "aw nuggets",
+            "nuts.",
+            "aw nuts",
+            "deadge",
+            "i'm deadge",
+            "i'm dyingdge",
+            "ongnoc",
+            "not even trolling",
+            "wuh woh"
         ],
-        "day_of_week_list": [
+        "dow_day_list": [
             "monday",
             "tuesday",
             "wednesday",
@@ -63,7 +75,7 @@
             "saturday",
             "sunday"
         ],
-        "month_list": [
+        "dow_month_list": [
             "january",
             "february",
             "march",
@@ -77,6 +89,11 @@
             "november",
             "december"
         ],
+        "injuries": {
+            "injury_verbs": ["stubbed", "bonked", "smashed", "injured", "broken", "ligma'd"],
+            "injury_bodyparts": ["head", "back", "toe", "toes", "shoulder", "shoulders", "neck", "chest", "arm", "arms", "knee", "knees", "wrist", "wrists"],
+            "injury_final": ["ouch", "pain", ":(", "it hurts :("]
+        },
         "voice_lines": {
             "chilling": [
                 "bing chilling",
@@ -121,14 +138,18 @@
             "not poggers",
             "no kyap",
             "that's kyap",
-            "that's so cringe"
+            "that's so cringe",
+            "stay in your lane kid"
         ],
         "extra_nut_messages": [
             "haha",
             "bing chilling",
             "no kyap",
             "poggo",
-            "boom roasted"
+            "boom roasted",
+            "not even trolling",
+            "ongnoc",
+            "stay in your lane kid"
         ]
     }
 }

@@ -1,12 +1,12 @@
 '''Bot that mimics Andrew Liang's time-keeping
 '''
 
+import asyncio
 import datetime
 import json
 import os
 import os.path
 import random
-import time
 
 import discord
 import discord.ext
@@ -15,7 +15,7 @@ from discord import errors
 from discord.ext import commands, tasks
 from discord.message import Message
 
-import typo_gen
+from bot_commands import helpers, on_messages, looped
 
 ###################################################################################################
 # Bot variables
@@ -32,11 +32,11 @@ authkey = json.load(authkey_file)
 bot_internals = settings["bot_internals"]
 bot_data = settings["bot_data"]
 
-andrew_intro = bot_data["intro"]
-andrew_outro = bot_data["outro"]
-day_of_week_list = bot_data["day_of_week_list"]
+andrew_intro = bot_data["dow_intro"]
+andrew_outro = bot_data["dow_outro"]
+dow_day_list = bot_data["dow_day_list"]
 
-mention_resposes = bot_data["mention_responses"]
+mention_responses = bot_data["mention_responses"]
 extra_nut_messages = bot_data["extra_nut_messages"]
 
 voice_lines = bot_data["voice_lines"]
@@ -48,7 +48,8 @@ api_key = authkey['api_key']
 
 ffmpeg_path = bot_internals["ffmpeg_path"]
 
-first_launch = True
+first_launch_timekeeper = True
+first_launch_injuries = True
 
 ###################################################################################################
 # Helper Functions
@@ -57,86 +58,10 @@ def json_write():
     '''Rewrites the bot's JSON properties (mainly the internals)
     '''
     json_file_w = open('bot_settings.json', 'w', encoding='utf8')
-    json.dump({"bot_internals": bot_internals, 
-               "bot_data": bot_data}, 
+    json.dump({"bot_internals": bot_internals,
+               "bot_data": bot_data},
               json_file_w)
     print("rewrote json")
-
-def get_time_string() -> str:
-    '''Gets a string that represents the current date and time (as written by Andrew Liang)
-
-    Returns:
-        str: Andrew Liang compliant time string
-    '''
-    
-    current_time = datetime.datetime.now()
-    
-    hour = current_time.hour
-    day_of_week = day_of_week_list[current_time.weekday()]
-    
-    time_of_day = ''
-    if hour >= 0 and hour < 3:
-        time_of_day = ' already'
-    if hour >= 3 and hour < 12:
-        time_of_day = ' morning'
-    elif hour >= 12 and hour < 13:
-        time_of_day = ' lunchtime'
-    elif hour >= 13 and hour < 17:
-        time_of_day = ' afternoon'
-    elif hour >= 17 and hour < 20:
-        time_of_day = ' evening'
-    elif hour >= 20 and hour < 24:
-        time_of_day = ' night'
-        
-    return "it's " + day_of_week + time_of_day
-
-def get_last_word(message: Message) -> str:
-    '''Gets the last word from a message, filtering for punctuation.
-
-    Args:
-        message (Message): Discord message to scan
-
-    Returns:
-        str: the last word in the Message
-    '''
-
-    message_content = message.content.strip()
-    last_word = message_content.split(" ")[-1]
-    last_letter_index = len(last_word)
-    for i, char in enumerate(last_word):
-        if char != "." and char != "?" and char != "!" and char != "\"":
-            last_letter_index = i
-
-    last_word = last_word[:last_letter_index + 1]
-    return last_word
-
-def these_nuts(last_word):
-    '''adds "these nuts" to the end of a message (in the context of the bot anyways)
-
-    Args:
-        last_word (string): last word of the message
-    '''
-    if last_word == "":
-        return
-    if len(last_word) >= 2:
-        if last_word[-2:] == "ma":
-            nutsified_message = last_word + " nuts."
-        else:
-            nutsified_message = last_word + " these nuts"
-    else:
-        nutsified_message = last_word + " these nuts"
-        
-    extra_nut_choice = random.randint(1, 5)
-    if extra_nut_choice == 1:
-        num_extra = random.randint(1, len(extra_nut_messages))
-        random_list = random.sample(extra_nut_messages, num_extra)
-        
-        for word in random_list:
-            nutsified_message += " " + word
-    else:
-        nutsified_message += "."
-        
-    return nutsified_message
 
 def log(command: str, server="", channel="", newline=True):
     '''Logs commands to the terminal.
@@ -173,7 +98,8 @@ async def echo(ctx, *args):
     '''
     log("echo", server=ctx.guild.name, channel=ctx.channel.name)
     # print('command: echo | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name)
-    await ctx.send('here\'s what you told me: {}'.format(' '.join(args)))
+    message = ' '.join(args)
+    await ctx.send(f'here\'s what you told me: {message}')
 
 @bot.command(name="ping", description="pong")
 async def ping(ctx):
@@ -194,31 +120,29 @@ async def whattime(ctx):
         ctx ([type]): [description]
     '''
     log("whattime", server=ctx.guild.name, channel=ctx.channel.name)
-    # current_time = datetime.datetime.now()
-    # print('command: whattime | server: ' + ctx.guild.name + " | channel: " + ctx.channel.name + " | time: " + current_time.strftime('%c'))
 
     # message strings
-    intro = random.choice(bot_data['intro'])
-    outro = random.choice(bot_data['outro'])
-    time_string = get_time_string()
+    intro = random.choice(bot_data['dow_intro'])
+    outro = random.choice(bot_data['dow_outro'])
+    time_string = helpers.get_time_string()
 
     # intro
     await ctx.send(intro)
-    time.sleep(1)
+    await asyncio.sleep(1)
     # what time + typo choice
     is_typo = random.randint(1, 50)
     print("typo choice: " + str(is_typo))
     if is_typo != 1:
         await ctx.send(time_string)
     else:
-        typo_time_string = typo_gen.make_typo(time_string)
+        typo_time_string = helpers.make_typo(time_string)
         await ctx.send(typo_time_string)
-        time.sleep(0.5)
+        await asyncio.sleep(0.5)
         await ctx.send("oops")
-        time.sleep(0.5)
+        await asyncio.sleep(0.5)
         await ctx.send(time_string)
     # wait
-    time.sleep(1)
+    await asyncio.sleep(1)
     await ctx.send(outro)
 
 # binds the bot to a specific channel
@@ -264,9 +188,44 @@ async def nut(ctx):
         await ctx.send(f"http error {err.status}")
         return
     
-    nut_string = these_nuts(get_last_word(msg_list[1]))
+    nut_string = helpers.these_nuts(helpers.get_last_word(msg_list[1]))
     await ctx.send(nut_string)
     print()
+    
+@bot.command(name="pianoman")
+async def pianoman(ctx):
+    '''time until piano man
+
+    Args:
+        ctx (_type_): _description_
+    '''
+    log(command="pianoman", server=ctx.guild.name, channel=ctx.channel.name)
+    
+    current_time = datetime.datetime.now()
+    date = current_time.date()
+    weekday = date.isoweekday()
+    days_until_saturday = 6 - weekday
+    
+    # condition check: past or equal to saturday
+    if days_until_saturday < 0:
+        days_until_saturday += 7
+    elif days_until_saturday == 0:
+        if current_time.hour >= 21:
+            # it's past 9 o'clock (or somehow exactly 9 o'clock); wait until the next one
+            days_until_saturday += 7
+        
+    saturday_nineoclock = datetime.datetime(current_time.year,
+                                            current_time.month,
+                                            current_time.day + days_until_saturday,
+                                            hour=21,
+                                            tzinfo=current_time.tzinfo)
+    
+    t_minus = saturday_nineoclock - current_time
+    
+    # https://stackoverflow.com/a/775075
+    m, s = divmod(t_minus.seconds, 60)
+    h, m = divmod(m, 60)
+    await ctx.send(f"t-: {t_minus.days} days, {h} hours, {m} minutes, {s} seconds")
     
 ###################################################################################################
 # Voice commands
@@ -409,12 +368,10 @@ async def leave(ctx):
 ###################################################################################################
 # Looping/concurrent tasks
 
-@tasks.loop(hours=2.0)
+@tasks.loop(hours=3, minutes=8, seconds=24)
 async def timekeeper():
     '''Time keeping
     '''
-    # current_time = datetime.datetime.now()
-    # print('task: timekeeper | time: ' + current_time.strftime('%c'))
     bound_channel = bot.get_channel(bot_internals["bound_channel"])
     if bound_channel is not None:
         log("timekeeper", server=bound_channel.guild.name, channel=bound_channel.name, newline=False)
@@ -423,36 +380,89 @@ async def timekeeper():
         print("you better start binding")
         return
     
-    global first_launch
-    if first_launch:
+    global first_launch_timekeeper
+    if first_launch_timekeeper:
         print()
-        first_launch = False
+        first_launch_timekeeper = False
         return
     
-    # current_time = datetime.datetime.now()
-    
-    intro = random.choice(bot_data["intro"])
-    time_string = get_time_string()
-    outro = random.choice(bot_data["outro"])
+    messages = await looped.timekeeper()
     
     # intro text
-    await bound_channel.send(intro)
-    time.sleep(1)
+    await bound_channel.send(messages[1])
+    await asyncio.sleep(1)
     # what time + typo
-    is_typo = random.randint(1, 50)
-    print(" | typo choice: " + str(is_typo))
-    if is_typo != 1:
-        await bound_channel.send(time_string)
+    if not messages[0]:
+        await bound_channel.send(messages[2])
     else:
-        typo_time_string = typo_gen.make_typo(time_string)
-        await bound_channel.send(typo_time_string)
-        time.sleep(0.5)
+        await bound_channel.send(messages[2])
+        await asyncio.sleep(0.5)
         await bound_channel.send("oops")
-        time.sleep(0.5)
-        await bound_channel.send(time_string)
+        await asyncio.sleep(0.5)
+        await bound_channel.send(messages[3])
     # outro text
-    time.sleep(1)
-    await bound_channel.send(outro)
+    await asyncio.sleep(1)
+    await bound_channel.send(messages[-1])
+    
+@tasks.loop(hours=7, minutes=36)
+async def injuries():
+    '''randomly injures andrew'''
+    bound_channel = bot.get_channel(bot_internals["bound_channel"])
+    if bound_channel is not None:
+        log("injury", server=bound_channel.guild.name, channel=bound_channel.name, newline=False)
+    else:
+        print("you better start binding")
+        return
+    
+    global first_launch_injuries
+    if first_launch_injuries:
+        print(" | first launch ignore")
+        first_launch_injuries = False
+        return
+
+    rand_choice = random.randint(0, 1)
+    if rand_choice != 0:
+        print(f" | odds: {rand_choice}")
+        return
+
+    messages = await looped.injuries()
+    
+    print(f" | choices: {messages}")
+    
+    await bound_channel.send(messages[0])
+    await asyncio.sleep(1)
+    await bound_channel.send(messages[1])
+    await asyncio.sleep(1)
+    await bound_channel.send(messages[2])
+    
+async def saturday_nine_oclock_init():
+    '''initializes the saturday_nine_oclock function
+    '''
+    log(command="saturday 9 o'clock initialize")
+    
+    time_until_saturday_nineoclock = helpers.find_next_saturday()
+    
+    # wait until it's saturday wooo
+    await asyncio.sleep(time_until_saturday_nineoclock.total_seconds())
+    await saturday_nine_oclock()
+    
+async def saturday_nine_oclock():
+    '''it's nine o'clock on a saturday
+    '''
+    
+    bound_channel = bot.get_channel(bot_internals["bound_channel"])
+    if bound_channel is not None:
+        log("timekeeper", server=bound_channel.guild.name, channel=bound_channel.name, newline=False)
+    else:
+        print("no bound channel for \"nine-o'clock on a saturday\" function!")
+        return
+
+    await bound_channel.send("it's nine o'clock on a saturday")
+    await asyncio.sleep(0.3)
+    await bound_channel.send("https://www.youtube.com/watch?v=gxEPV4kolz0")
+    
+    # wait a day until the next iteration (assuming the bot can actually run for a day lol)
+    await saturday_nine_oclock_init()
 
 @tasks.loop(minutes=30)
 async def idle_dc():
@@ -465,6 +475,8 @@ async def idle_dc():
             await client.disconnect()
             log("voice idle dc", server=client.guild.name, channel=client.channel.name)
             
+###################################################################################################
+# On message commands
 
 @bot.listen("on_message")
 async def random_response(message: Message):
@@ -473,52 +485,9 @@ async def random_response(message: Message):
     Args:
         message (Message): the message to respond to
     '''
-    msg_channel = message.channel
-    
-    # ignore mentions
-    if bot.user.mentioned_in(message):
-        return
-    
-    # ignore bot messages
-    if message.author.bot:
-        return
-    
-    # ignore commands
-    if len(message.content) > 0:
-        if message.content[0] == "$":
-            return
-    
-    # log to console
     log("random response", server=message.guild.name, channel=message.channel.name, newline=False)
     
-    # random chance to respond
-    resp_rand = random.randint(1, 50)
-    print(" | odds = " + str(resp_rand), end="")
-    
-    # failed roll and/or message is by bot
-    if resp_rand != 1:
-        print()
-        return
-    
-    # choosing an adequate response
-    resp_choice = random.randint(1, 100)
-    if resp_choice <= 50:
-        print(" | choice: deez nuts", end="")
-        
-        # nutsify
-        last_word = get_last_word(message)
-        nut_message = these_nuts(last_word)
-        await msg_channel.send(nut_message)
-    elif resp_choice <= 75:
-        print(" | choice: you're my (blank)", end="")
-        last_word = get_last_word(message)
-        youre_my_message = message.author.mention + ", _you're_ my " + last_word
-        await msg_channel.send(youre_my_message)
-    else:
-        print(" | choice: poggers", end="")
-        await msg_channel.send("poggers")
-    
-    print()
+    await on_messages.random_response(message)
     
 @bot.listen("on_message")
 async def mention_response(message: Message):
@@ -530,11 +499,7 @@ async def mention_response(message: Message):
     if bot.user.mentioned_in(message):
         log("mention response", server=message.guild.name, channel=message.channel.name, newline=False)
         
-        rand_resp = random.choice(mention_resposes)
-        print(f" | response: \"{rand_resp}\"")
-        
-        msg_channel = message.channel
-        await msg_channel.send(rand_resp)
+        await on_messages.mention_response(message)
                
 @bot.event
 async def on_command_error(ctx, error):
@@ -553,10 +518,13 @@ async def on_command_error(ctx, error):
 async def on_ready():
     '''Runs when the bot is ready
     '''
-    print('logged in as {0.user}'.format(bot))
+    print(f'logged in as {bot.user}')
     timekeeper.start()
+    injuries.start()
     
     game = discord.Game("these nuts.")
     await bot.change_presence(activity=game)
+    
+    await saturday_nine_oclock_init()
 
 bot.run(api_key)
