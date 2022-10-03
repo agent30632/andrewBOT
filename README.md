@@ -1,12 +1,12 @@
 # andrewBOT
-Bot that mimics Andrew Liang's Discord mannerisms (poorly)
+Bot that mimics Andrew Liang's Discord mannerisms
 
 ## Features
 - Makes jokes in response to people's messages
 - Keeps the time (but not to a detailed degree)
 - Occasionally gets injured
-- Can join voice calls and play clips of Andrew Liang
-- Occasionally makes errors in its speech
+- Can join voice calls and play voice clips of Andrew Liang
+- Occasionally makes errors in its messages
 - Bonus: tells you when it's 9 o'clock on a Saturday, feat. Piano Man - Billy Joel
 
 ## Setup
