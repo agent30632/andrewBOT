@@ -2,7 +2,7 @@
 Bot that mimics Andrew Liang's Discord mannerisms (poorly)
 
 ## Features
-- Makes "deez nuts" jokes in response to people's messages
+- Makes jokes in response to people's messages
 - Keeps the time (but not to a detailed degree)
 - Occasionally gets injured
 - Can join voice calls and play clips of Andrew Liang
